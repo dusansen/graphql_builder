@@ -1,0 +1,62 @@
+{
+  "articles": [
+    {
+      "id": "1",
+      "title": "Article 1",
+      "author": "1",
+      "text": "Text of article 1",
+      "comments": ["1", "2"]
+    },
+    {
+      "id": "2",
+      "title": "Article 2",
+      "author": "2",
+      "text": "Text of article 2"
+    },
+    {
+      "id": "3",
+      "title": "Article 3",
+      "author": "2",
+      "text": "Text of article 3"
+    }
+  ],
+  "users": [
+    {
+      "id": "1",
+      "firstName": "Marko",
+      "lastName": "Markovic"
+    },
+    {
+      "id": "2",
+      "firstName": "Ivan",
+      "lastName": "Ivanovic"
+    }
+  ],
+  "comments": [
+    {
+      "id": "1",
+      "text": "First comment",
+      "author": "1"
+    },
+    {
+      "id": "2",
+      "text": "Second comment",
+      "author": "1"
+    },
+    {
+      "id": "3",
+      "text": "Third comment",
+      "author": "2"
+    },
+    {
+      "id": "4",
+      "text": "Fourth comment",
+      "author": "2"
+    },
+    {
+      "id": "5",
+      "text": "Fifth comment",
+      "author": "1"
+    }
+  ]
+}

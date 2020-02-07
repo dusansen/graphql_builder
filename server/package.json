@@ -1,0 +1,26 @@
+{
+  "name": "server",
+  "version": "1.0.0",
+  "description": "GraphQL Apollo Server",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "json:server": "json-server --watch db.json",
+    "dev": "nodemon --exec babel-node index.js"
+  },
+  "keywords": [],
+  "author": "Dusan Brnic",
+  "license": "ISC",
+  "dependencies": {
+    "apollo-server": "^2.10.0",
+    "axios": "^0.19.2",
+    "graphql": "^14.6.0",
+    "json-server": "^0.15.1"
+  },
+  "devDependencies": {
+    "@babel/core": "^7.8.4",
+    "@babel/node": "^7.8.4",
+    "@babel/preset-env": "^7.8.4",
+    "nodemon": "^2.0.2"
+  }
+}
