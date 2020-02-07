@@ -2,7 +2,7 @@ const { gql } = require('apollo-server');
 
 export const typeDefs = gql`
   type Article {
-    id: String,
+    id: Int,
     title: String,
     author: User,
     text: String,
@@ -10,19 +10,21 @@ export const typeDefs = gql`
   }
 
   type Comment {
-    id: String,
+    id: Int,
     text: String,
     author: User
   }
 
   type User {
-    id: String,
+    id: Int,
     firstName: String,
     lastName: String,
   }
 
   type Query {
     getArticles: [Article],
-    getArticleById(id: Int!): Article
+    getArticleById(id: Int!): Article,
+    getComments: [Comment],
+    getCommentsByUser(author: Int!): [Comment]
   }
 `;
