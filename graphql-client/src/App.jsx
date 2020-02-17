@@ -4,17 +4,32 @@ import { useQuery } from '@apollo/react-hooks';
 import { GET_GRAPHQL_SCHEMA } from './queries/queries';
 import styled from 'styled-components';
 import { Layout, Select, Button, Tree } from 'antd';
+import Filter from './components/filters/Filter';
+import Filters from './components/filters/Filters';
 
 const { Header, Content } = Layout;
 const { Option } = Select;
 const { TreeNode } = Tree;
 
+const initialState = {
+  expandedKeys: [],
+  autoExpandParent: true,
+  checkedKeys: [],
+  selectedKeys: [],
+  selectedFields: []
+}
+
 const App = () => {
-  const [ queries, setQueries ] = useState([]);
-  const [ selectedQuery, setSelectedQuery ] = useState(null);
-  const [ queryTree, setQueryTree ] = useState(null);
-  const [ queryReturnType, setQueryReturnType ] = useState(null)
+  const [queries, setQueries] = useState([]);
+  const [selectedQuery, setSelectedQuery] = useState(null);
+  const [queryTree, setQueryTree] = useState(null);
+  const [queryReturnType, setQueryReturnType] = useState(null);
   const { data: schema } = useQuery(GET_GRAPHQL_SCHEMA);
+  const [expandedKeys, setExpandedKeys] = useState([]);
+  const [autoExpandParent, setAutoExpandParent] = useState(true);
+  const [checkedKeys, setCheckedKeys] = useState([]);
+  const [selectedKeys, setSelectedKeys] = useState([]);
+  const [selectedFields, setSelectedFields] = useState([]);
 
   useEffect(() => {
     if (schema) {
@@ -23,11 +38,24 @@ const App = () => {
     }
   }, [schema]);
 
+  useEffect(() => {
+    console.log('selectedFields changed', selectedFields);
+  }, [selectedFields]);
+
   const handleQuerySelect = selected => {
     const query = queries.find(q => q.name === selected);
+    resetFieldsSelection();
     setSelectedQuery(query);
     setQueryReturnType(query.type.name || query.type.ofType.name);
     createQueryTree(query.type.name || query.type.ofType.name);
+  };
+
+  const resetFieldsSelection = () => {
+    setExpandedKeys(initialState.expandedKeys);
+    setAutoExpandParent(initialState.autoExpandParent);
+    setSelectedKeys(initialState.selectedKeys);
+    setCheckedKeys(initialState.checkedKeys);
+    setSelectedFields(initialState.selectedFields);
   };
 
   const createQueryTree = queryReturnType => {
@@ -40,6 +68,7 @@ const App = () => {
         title: tf.name,
         key: tf.name,
         type,
+        kind: tf.type.kind,
         children: []
       });
       const kind = tf.type.name ? tf.type.kind : tf.type.ofType.kind;
@@ -57,8 +86,9 @@ const App = () => {
       const type = tf.type.name ? tf.type.name : tf.type.ofType.name;
       parentNode.children.push({
         title: tf.name,
-        key: `${parentNode.key}-${tf.name}`,
+        key: `${parentNode.key}.${tf.name}`,
         type,
+        kind: tf.type.kind,
         children: []
       });
       const kind = tf.type.name ? tf.type.kind : tf.type.ofType.kind
@@ -83,6 +113,44 @@ const App = () => {
     return <TreeNode key={item.key} {...item} />
   });
 
+  const onExpand = expandedKeys => {
+    setExpandedKeys(expandedKeys);
+    setAutoExpandParent(false);
+  };
+
+  const onCheck = (keys, { checked, node: { props } }) => {
+    setCheckedKeys(keys);
+    const newSelectedFields = [...selectedFields];
+    if (checked) {
+      addToSelectedFields(newSelectedFields, props.dataRef || props);
+    } else {
+      removeFromSelectedFields(newSelectedFields, props.dataRef || props);
+    }
+    setSelectedFields(newSelectedFields);
+  };
+
+  const addToSelectedFields = (newSelectedFields, node) => {
+    if (node.children.length) {
+      node.children.forEach(child => addToSelectedFields(newSelectedFields, child));
+      return;
+    }
+    if (!newSelectedFields.find(n => n.key === node.key)) {
+      newSelectedFields.push(node);
+    }
+  };
+
+  const removeFromSelectedFields = (newSelectedFields, node) => {
+    if (!node.children.length) {
+      const nodeIndex = newSelectedFields.findIndex(n => n.key === node.key || n.key === node.eventKey);
+      newSelectedFields.splice(nodeIndex, 1);
+    }
+    node.children.forEach(child => removeFromSelectedFields(newSelectedFields, child));
+  };
+
+  const onSelect = selectedKeys => {
+    setSelectedKeys(selectedKeys);
+  };
+
   return (
     <StyledWrapper>
       <Layout>
@@ -93,17 +161,29 @@ const App = () => {
             <Button icon='codepen' className='query-code-button'>See Query</Button>
           </div>
           <div className='main-content'>
-            <div className='main-left'>
+            <div className='query-maker'>
+              <h3>Query Selection</h3>
               <Select className='query-select' placeholder='Select query' onChange={handleQuerySelect}>
                 {queries.length > 0 ? renderQueriesSelect() : null}
               </Select>
               {queryTree ? (
-                <Tree checkable>
+                <Tree
+                  checkable
+                  onExpand={onExpand}
+                  expandedKeys={expandedKeys}
+                  autoExpandParent={autoExpandParent}
+                  onCheck={onCheck}
+                  checkedKeys={checkedKeys}
+                  onSelect={onSelect}
+                  selectedKeys={selectedKeys}>
                   {renderQueryTree(queryTree)}
                 </Tree>
               ) : null}
             </div>
-            <div className='main-right'>QUERY RESULTS: {queryReturnType}</div>
+            <div className='query-filters'>
+              <Filters selectedFields={selectedFields} />
+            </div>
+            <div className='query-results'>QUERY RESULTS: {queryReturnType}</div>
           </div>
         </Content>
       </Layout>
@@ -114,7 +194,7 @@ const App = () => {
 const StyledWrapper = styled.div`
   .main-content {
     display: grid;
-    grid-template-columns: 1fr 1fr;
+    grid-template-columns: 1.5fr 1.5fr 2fr;
     background-color: var(--main-bg-color);
     padding: 25px 50px;
   }
@@ -133,7 +213,7 @@ const StyledWrapper = styled.div`
   }
 
   .query-select {
-    width: 350px;
+    width: 300px;
   }
 
   .query-select,
