@@ -47,7 +47,10 @@ const App = () => {
   }, [schema]);
 
   useEffect(() => {
-    console.log('selectedFields changed', selectedFields);
+    if (selectedQuery) {
+      const gqlQuery = createGraphQLQuery();
+      setGqlQuery(gqlQuery);
+    }
   }, [selectedFields]);
 
   const toogleShowGqlQuery = () => {
