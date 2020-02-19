@@ -1,11 +1,12 @@
 import React, { useEffect, useState } from 'react';
 import './App.css';
-import { useQuery } from '@apollo/react-hooks';
+import { useQuery, useApolloClient } from '@apollo/react-hooks';
+import { gql } from 'apollo-boost';
 import { GET_GRAPHQL_SCHEMA } from './queries/queries';
 import styled from 'styled-components';
 import { Layout, Select, Button, Tree } from 'antd';
-import Filter from './components/filters/Filter';
-import Filters from './components/filters/Filters';
+import QueryArguments from './components/arguments/QueryArguments';
+import QueryViewer from './components/query/QueryViewer';
 
 const { Header, Content } = Layout;
 const { Option } = Select;
@@ -23,13 +24,20 @@ const App = () => {
   const [queries, setQueries] = useState([]);
   const [selectedQuery, setSelectedQuery] = useState(null);
   const [queryTree, setQueryTree] = useState(null);
-  const [queryReturnType, setQueryReturnType] = useState(null);
-  const { data: schema } = useQuery(GET_GRAPHQL_SCHEMA);
   const [expandedKeys, setExpandedKeys] = useState([]);
   const [autoExpandParent, setAutoExpandParent] = useState(true);
   const [checkedKeys, setCheckedKeys] = useState([]);
   const [selectedKeys, setSelectedKeys] = useState([]);
   const [selectedFields, setSelectedFields] = useState([]);
+  const [showQueryArgs, setShowQueryArgs] = useState(false);
+  const [queryArgValues, setQueryArgValues] = useState({});
+  const [gqlQuery, setGqlQuery] = useState('');
+  const [showGqlQuery, setShowGqlQuery] = useState(false);
+  const [queryResult, setQueryResult] = useState(null);
+
+  const client = useApolloClient();
+  const { data: schema } = useQuery(GET_GRAPHQL_SCHEMA);
+
 
   useEffect(() => {
     if (schema) {
@@ -42,11 +50,15 @@ const App = () => {
     console.log('selectedFields changed', selectedFields);
   }, [selectedFields]);
 
+  const toogleShowGqlQuery = () => {
+    setShowGqlQuery(!showGqlQuery);
+  };
+
   const handleQuerySelect = selected => {
     const query = queries.find(q => q.name === selected);
     resetFieldsSelection();
     setSelectedQuery(query);
-    setQueryReturnType(query.type.name || query.type.ofType.name);
+    setShowQueryArgs(query.args.length > 0);
     createQueryTree(query.type.name || query.type.ofType.name);
   };
 
@@ -134,14 +146,22 @@ const App = () => {
       node.children.forEach(child => addToSelectedFields(newSelectedFields, child));
       return;
     }
-    if (!newSelectedFields.find(n => n.key === node.key)) {
+    if (!newSelectedFields.find(n => {
+      const nKey = n.key || n.eventKey;
+      const nodeKey = node.key || node.eventKey
+      return nKey === nodeKey;
+    })) {
       newSelectedFields.push(node);
     }
   };
 
   const removeFromSelectedFields = (newSelectedFields, node) => {
     if (!node.children.length) {
-      const nodeIndex = newSelectedFields.findIndex(n => n.key === node.key || n.key === node.eventKey);
+      const nodeIndex = newSelectedFields.findIndex(n => {
+        const nKey = n.key || n.eventKey;
+        const nodeKey = node.key || node.eventKey;
+        return nKey === nodeKey;
+      });
       newSelectedFields.splice(nodeIndex, 1);
     }
     node.children.forEach(child => removeFromSelectedFields(newSelectedFields, child));
@@ -151,14 +171,67 @@ const App = () => {
     setSelectedKeys(selectedKeys);
   };
 
+  const handleRunQuery = async () => {
+    if (!selectedQuery || !selectedFields.length) {
+      return;
+    }
+    const gqlQuery = createGraphQLQuery();
+    setGqlQuery(gqlQuery);
+    const { data } = await client.query({
+      query: gql`${gqlQuery}`
+    })
+    setQueryResult(data);
+  };
+
+  const createGraphQLQuery = () => {
+    let gqlParamsObject = {};
+    const removeValue = '__remove__';
+    selectedFields.forEach(field => {
+      const fieldKey = field.key || field.eventKey;
+      if (fieldKey.split('.').length === 1) {
+        gqlParamsObject[fieldKey] = removeValue;
+      } else {
+        const keys = fieldKey.split('.');
+        let child = gqlParamsObject;
+        const pom = child;
+        keys.forEach((k, i) => {
+          if (i + 1 < keys.length) {
+            child[k] = child[k] || {};
+          } else {
+            child[k] = child[k] || removeValue;
+          }
+          child = child[k];
+        });
+        gqlParamsObject = {...gqlParamsObject, ...pom};
+      }
+    });
+
+    const gqlObject = {
+      [selectedQuery.name]: gqlParamsObject
+    };
+
+    return JSON.stringify(gqlObject, null, 2)
+      .replace(new RegExp(`: "${removeValue}"`, 'g'), '')
+      .replace(new RegExp('[,":]', 'g'), '');
+  };
+
   return (
     <StyledWrapper>
       <Layout>
         <Header>GraphQL Query Builder</Header>
         <Content>
           <div className='run-query'>
-            <Button icon='caret-right'>Run Query</Button>
-            <Button icon='codepen' className='query-code-button'>See Query</Button>
+            <Button
+              icon='caret-right'
+              onClick={handleRunQuery}>
+                Run Query
+            </Button>
+            <Button
+              icon='codepen'
+              className='query-code-button'
+              onClick={toogleShowGqlQuery}>
+                {showGqlQuery ? 'Hide Query' : 'Show Query'}
+            </Button>
           </div>
           <div className='main-content'>
             <div className='query-maker'>
@@ -166,26 +239,41 @@ const App = () => {
               <Select className='query-select' placeholder='Select query' onChange={handleQuerySelect}>
                 {queries.length > 0 ? renderQueriesSelect() : null}
               </Select>
-              {queryTree ? (
-                <Tree
-                  checkable
-                  onExpand={onExpand}
-                  expandedKeys={expandedKeys}
-                  autoExpandParent={autoExpandParent}
-                  onCheck={onCheck}
-                  checkedKeys={checkedKeys}
-                  onSelect={onSelect}
-                  selectedKeys={selectedKeys}>
-                  {renderQueryTree(queryTree)}
-                </Tree>
-              ) : null}
+              {
+                queryTree ? (
+                  <Tree
+                    checkable
+                    onExpand={onExpand}
+                    expandedKeys={expandedKeys}
+                    autoExpandParent={autoExpandParent}
+                    onCheck={onCheck}
+                    checkedKeys={checkedKeys}
+                    onSelect={onSelect}
+                    selectedKeys={selectedKeys}>
+                    {renderQueryTree(queryTree)}
+                  </Tree>
+                ) : null
+              }
+              {
+                showQueryArgs &&
+                <QueryArguments
+                  queryArgs={selectedQuery.args}
+                  queryArgValues={queryArgValues}
+                  setQueryArgValues={setQueryArgValues}
+                />
+              }
             </div>
-            <div className='query-filters'>
-              <Filters selectedFields={selectedFields} />
+            <div>
+              <h3>QUERY RESULTS</h3>
+            {
+              queryResult ?
+              <pre className='query-result'>{JSON.stringify(queryResult, null, 2)}</pre> :
+              null
+            }
             </div>
-            <div className='query-results'>QUERY RESULTS: {queryReturnType}</div>
           </div>
         </Content>
+        {(showGqlQuery && gqlQuery) && <QueryViewer query={gqlQuery}/>}
       </Layout>
     </StyledWrapper>
   );
@@ -194,7 +282,8 @@ const App = () => {
 const StyledWrapper = styled.div`
   .main-content {
     display: grid;
-    grid-template-columns: 1.5fr 1.5fr 2fr;
+    grid-template-columns: 2fr 3fr;
+    grid-column-gap: 16px;
     background-color: var(--main-bg-color);
     padding: 25px 50px;
   }
@@ -228,6 +317,10 @@ const StyledWrapper = styled.div`
 
   .query-code-button {
     margin-left: 16px;
+  }
+
+  .query-result {
+    font-size: 12px;
   }
 `;
 

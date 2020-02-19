@@ -9,7 +9,9 @@ export const resolvers = {
   },
   Article: {
     author: parent => axios.get(`http://localhost:3000/users/${parent.author}`).then(result => result.data),
-    comments: parent => axios.get('http://localhost:3000/comments').then(result => result.data.filter(com => parent.comments.includes(com.id)))
+    comments: parent => axios.get('http://localhost:3000/comments').then(result =>
+      result.data.filter(com => parent.comments && parent.comments.includes(com.id))
+    )
   },
   Comment: {
     author: parent => axios.get(`http://localhost:3000/users/${parent.author}`).then(result => result.data)
