@@ -54,15 +54,20 @@ const App = () => {
   }, [schema]);
 
   useEffect(() => {
-    if (selectedQuery) {
-      const gqlQuery = createGraphQLQuery();
-      setGqlQuery(gqlQuery);
-    }
+    calculateQuery();
   }, [selectedFields, queryArgValues]);
 
   useEffect(() => {
     setQueryArgValues(initialState.queryArgValues);
+    calculateQuery();
   }, [selectedQuery]);
+
+  const calculateQuery = () => {
+    if (selectedQuery) {
+      const gqlQuery = createGraphQLQuery();
+      setGqlQuery(gqlQuery);
+    }
+  };
 
   const toogleShowGqlQuery = () => {
     setShowGqlQuery(!showGqlQuery);
@@ -333,7 +338,7 @@ const App = () => {
             </div>
           </div>
         </Content>
-        {(showGqlQuery && gqlQuery) && <QueryViewer query={gqlQuery}/>}
+        {showGqlQuery && <QueryViewer query={gqlQuery}/>}
       </Layout>
     </StyledWrapper>
   );
