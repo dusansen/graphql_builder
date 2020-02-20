@@ -11,7 +11,7 @@ const QueryViewer = ({ query }) => {
 
 const StyledWrapper = styled.pre`
   position: fixed;
-  top: 120px;
+  top: 130px;
   left: 0;
   width: 100vw;
   height: 100vh;

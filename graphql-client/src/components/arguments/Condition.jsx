@@ -21,6 +21,10 @@ const CONDITIONS = {
     { label: 'less than or equal', value: 'lte' },
     { label: 'greater than', value: 'gt' },
     { label: 'greater than or equal', value: 'gte' }
+  ],
+  ID: [
+    { label: 'is', value: 'is' },
+    { label: 'not', value: 'not' }
   ]
 };
 

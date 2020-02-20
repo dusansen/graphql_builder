@@ -17,23 +17,25 @@ const initialState = {
   autoExpandParent: true,
   checkedKeys: [],
   selectedKeys: [],
-  selectedFields: []
+  selectedFields: [],
+  queryResult: null,
+  queryArgValues: {}
 }
 
 const App = () => {
   const [queries, setQueries] = useState([]);
   const [selectedQuery, setSelectedQuery] = useState(null);
   const [queryTree, setQueryTree] = useState(null);
-  const [expandedKeys, setExpandedKeys] = useState([]);
-  const [autoExpandParent, setAutoExpandParent] = useState(true);
-  const [checkedKeys, setCheckedKeys] = useState([]);
-  const [selectedKeys, setSelectedKeys] = useState([]);
-  const [selectedFields, setSelectedFields] = useState([]);
+  const [expandedKeys, setExpandedKeys] = useState(initialState.expandedKeys);
+  const [autoExpandParent, setAutoExpandParent] = useState(initialState.autoExpandParent);
+  const [checkedKeys, setCheckedKeys] = useState(initialState.checkedKeys);
+  const [selectedKeys, setSelectedKeys] = useState(initialState.selectedKeys);
+  const [selectedFields, setSelectedFields] = useState(initialState.selectedFields);
   const [showQueryArgs, setShowQueryArgs] = useState(false);
-  const [queryArgValues, setQueryArgValues] = useState({});
+  const [queryArgValues, setQueryArgValues] = useState(initialState.queryArgValues);
   const [gqlQuery, setGqlQuery] = useState('');
   const [showGqlQuery, setShowGqlQuery] = useState(false);
-  const [queryResult, setQueryResult] = useState(null);
+  const [queryResult, setQueryResult] = useState(initialState.queryResult);
 
   const client = useApolloClient();
   const { data: schema } = useQuery(GET_GRAPHQL_SCHEMA);
@@ -41,8 +43,13 @@ const App = () => {
 
   useEffect(() => {
     if (schema) {
-      const graphqlQueries = schema['__schema'].types.find(type => type.name === 'Query');
-      setQueries(graphqlQueries.fields);
+      const graphqlQueries = schema['__schema'].types
+        .find(type => type.name === 'Query').fields
+        .map(f => ({...f, gqlType: 'query'}));
+      const graphqlMutations = schema['__schema'].types
+        .find(type => type.name === 'Mutation').fields
+        .map(f => ({...f, gqlType: 'mutation'}));
+      setQueries([...graphqlQueries, ...graphqlMutations]);
     }
   }, [schema]);
 
@@ -51,7 +58,11 @@ const App = () => {
       const gqlQuery = createGraphQLQuery();
       setGqlQuery(gqlQuery);
     }
-  }, [selectedFields]);
+  }, [selectedFields, queryArgValues]);
+
+  useEffect(() => {
+    setQueryArgValues(initialState.queryArgValues);
+  }, [selectedQuery]);
 
   const toogleShowGqlQuery = () => {
     setShowGqlQuery(!showGqlQuery);
@@ -114,7 +125,9 @@ const App = () => {
   }
 
   const renderQueriesSelect = () => {
-    return queries.map((q, i) => <Option key={i} value={q.name} className='query-option'>{q.name}</Option>);
+    return queries.map((q, i) =>
+      <Option key={i} value={q.name}>{q.name}</Option>
+    );
   };
 
   const renderQueryTree = treeData => treeData.map(item => {
@@ -174,16 +187,39 @@ const App = () => {
     setSelectedKeys(selectedKeys);
   };
 
-  const handleRunQuery = async () => {
+  const handleRunQuery = () => {
     if (!selectedQuery || !selectedFields.length) {
       return;
     }
-    const gqlQuery = createGraphQLQuery();
-    setGqlQuery(gqlQuery);
-    const { data } = await client.query({
-      query: gql`${gqlQuery}`
-    })
-    setQueryResult(data);
+    if (selectedQuery.gqlType === 'query') {
+      runGQLQuery();
+      return;
+    }
+    if (selectedQuery.gqlType === 'mutation') {
+      runGQLMutation();
+    }
+  };
+
+  const runGQLQuery = async () => {
+    try {
+      const { data } = await client.query({
+        query: gql`${gqlQuery}`
+      });
+      setQueryResult(data);
+    } catch (ex) {
+      setQueryResult(initialState.queryResult);
+    }
+  };
+
+  const runGQLMutation = async () => {
+    try {
+      const { data } = await client.mutate({
+        mutation: gql`${gqlQuery}`
+      });
+      setQueryResult(data);
+    } catch (ex) {
+      setQueryResult(initialState.queryResult);
+    }
   };
 
   const createGraphQLQuery = () => {
@@ -213,10 +249,31 @@ const App = () => {
       [selectedQuery.name]: gqlParamsObject
     };
 
-    return JSON.stringify(gqlObject, null, 2)
+    const queryJSON =  JSON.stringify(gqlObject, null, 2)
       .replace(new RegExp(`: "${removeValue}"`, 'g'), '')
       .replace(new RegExp('[,":]', 'g'), '');
+
+    const queryWithParameters = addQueryParameters(queryJSON);
+
+    return selectedQuery.gqlType === 'mutation' ? `mutation ${selectedQuery.name} ${queryWithParameters}` : queryWithParameters;
   };
+
+  const addQueryParameters = query => {
+    if (!Object.keys(queryArgValues).length) {
+      return query;
+    }
+    
+    const queryParameters = Object.entries(queryArgValues)
+      .reduce((acc,val) =>
+        acc += val[1].value ? `,${val[0]}: "${val[1].value}"` : '', '')
+        .substring(1);
+    
+    if (!queryParameters) {
+      return query;
+    }
+    
+    return query.replace(new RegExp(`${selectedQuery.name} {`), `${selectedQuery.name} (${queryParameters}) {`);
+  }
 
   return (
     <StyledWrapper>
@@ -285,7 +342,7 @@ const App = () => {
 const StyledWrapper = styled.div`
   .main-content {
     display: grid;
-    grid-template-columns: 2fr 3fr;
+    grid-template-columns: 1fr 2fr;
     grid-column-gap: 16px;
     background-color: var(--main-bg-color);
     padding: 25px 50px;
