@@ -3,24 +3,23 @@
     {
       "id": "1",
       "title": "Article 1",
-      "author": "1",
-      "text": "Text of article 1",
-      "comments": ["1", "2"]
+      "authorId": "1",
+      "text": "Text of article 1"
     },
     {
       "id": "2",
       "title": "Article 2",
-      "author": "2",
+      "authorId": "2",
       "text": "Text of article 2"
     },
     {
       "id": "3",
       "title": "Article 3",
-      "author": "2",
+      "authorId": "2",
       "text": "Text of article 3"
     }
   ],
-  "users": [
+  "authors": [
     {
       "id": "1",
       "firstName": "Marko",
@@ -36,27 +35,32 @@
     {
       "id": "1",
       "text": "First comment",
-      "author": "1"
+      "authorId": "1",
+      "articleId": "1"
     },
     {
       "id": "2",
       "text": "Second comment",
-      "author": "1"
+      "authorId": "1",
+      "articleId": "2"
     },
     {
       "id": "3",
       "text": "Third comment",
-      "author": "2"
+      "authorId": "2",
+      "articleId": "1"
     },
     {
       "id": "4",
       "text": "Fourth comment",
-      "author": "2"
+      "authorId": "2",
+      "articleId": "3"
     },
     {
       "id": "5",
       "text": "Fifth comment",
-      "author": "1"
+      "authorId": "1",
+      "articleId": "3"
     }
   ]
 }
