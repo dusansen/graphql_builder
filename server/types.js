@@ -23,13 +23,11 @@ export const typeDefs = gql`
 
   type Query {
     getArticles: [Article],
-    getArticleById(id: ID!): Article,
     getComments: [Comment],
-    getCommentsByUser(author: ID!): [Comment]
   }
 
   type Mutation {
     addArticle(title: String!, text: String!, author: ID!): Article,
-    addUser(firstName: String!, lastName: String!): User
+    addAuthor(firstName: String!, lastName: String!): User
   }
 `;
