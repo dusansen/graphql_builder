@@ -7,6 +7,7 @@ import styled from 'styled-components';
 import { Layout, Select, Button, Tree } from 'antd';
 import QueryArguments from './components/arguments/QueryArguments';
 import QueryViewer from './components/query/QueryViewer';
+import Filters from './components/filters/Filters';
 
 const { Header, Content } = Layout;
 const { Option } = Select;
@@ -33,9 +34,11 @@ const App = () => {
   const [selectedFields, setSelectedFields] = useState(initialState.selectedFields);
   const [showQueryArgs, setShowQueryArgs] = useState(false);
   const [queryArgValues, setQueryArgValues] = useState(initialState.queryArgValues);
-  const [gqlQuery, setGqlQuery] = useState('');
+  const [gqlQueryText, setGqlQueryText] = useState('');
   const [showGqlQuery, setShowGqlQuery] = useState(false);
   const [queryResult, setQueryResult] = useState(initialState.queryResult);
+  const [selectedFilters, setSelectedFilters] = useState({});
+  const [allFilters, setAllFilters] = useState([]);
 
   const client = useApolloClient();
   const { data: schema } = useQuery(GET_GRAPHQL_SCHEMA);
@@ -64,8 +67,8 @@ const App = () => {
 
   const calculateQuery = () => {
     if (selectedQuery) {
-      const gqlQuery = createGraphQLQuery();
-      setGqlQuery(gqlQuery);
+      const gqlQueryText = createGraphQLQuery();
+      setGqlQueryText(gqlQueryText);
     }
   };
 
@@ -193,6 +196,7 @@ const App = () => {
   };
 
   const handleRunQuery = () => {
+    console.log('handleRunQuery');
     if (!selectedQuery || !selectedFields.length) {
       return;
     }
@@ -208,7 +212,7 @@ const App = () => {
   const runGQLQuery = async () => {
     try {
       const { data } = await client.query({
-        query: gql`${gqlQuery}`
+        query: gql`${gqlQueryText}`
       });
       setQueryResult(data);
     } catch (ex) {
@@ -217,12 +221,14 @@ const App = () => {
   };
 
   const runGQLMutation = async () => {
+    console.log('mutation run');
     try {
       const { data } = await client.mutate({
-        mutation: gql`${gqlQuery}`
+        mutation: gql`${gqlQueryText}`
       });
       setQueryResult(data);
     } catch (ex) {
+      console.log('exception');
       setQueryResult(initialState.queryResult);
     }
   };
@@ -258,27 +264,27 @@ const App = () => {
       .replace(new RegExp(`: "${removeValue}"`, 'g'), '')
       .replace(new RegExp('[,":]', 'g'), '');
 
-    const queryWithParameters = addQueryParameters(queryJSON);
+    const queryWithParameters = addParamsToQuery(queryJSON);
 
     return selectedQuery.gqlType === 'mutation' ? `mutation ${selectedQuery.name} ${queryWithParameters}` : queryWithParameters;
   };
 
-  const addQueryParameters = query => {
+  const addParamsToQuery = query => {
     if (!Object.keys(queryArgValues).length) {
       return query;
     }
     
     const queryParameters = Object.entries(queryArgValues)
-      .reduce((acc,val) =>
+      .reduce((acc, val) =>
         acc += val[1].value ? `,${val[0]}: "${val[1].value}"` : '', '')
-        .substring(1);
+      .substring(1);
     
     if (!queryParameters) {
       return query;
     }
     
     return query.replace(new RegExp(`${selectedQuery.name} {`), `${selectedQuery.name} (${queryParameters}) {`);
-  }
+  };
 
   return (
     <StyledWrapper>
@@ -328,6 +334,9 @@ const App = () => {
                 />
               }
             </div>
+            <div className='query-filters'>
+              <Filters selectedFields={selectedFields} />
+            </div>
             <div>
               <h3>QUERY RESULTS</h3>
             {
@@ -338,7 +347,7 @@ const App = () => {
             </div>
           </div>
         </Content>
-        {showGqlQuery && <QueryViewer query={gqlQuery}/>}
+        {showGqlQuery && <QueryViewer query={gqlQueryText}/>}
       </Layout>
     </StyledWrapper>
   );
@@ -347,7 +356,7 @@ const App = () => {
 const StyledWrapper = styled.div`
   .main-content {
     display: grid;
-    grid-template-columns: 1fr 2fr;
+    grid-template-columns: 1.5fr 2.5fr 3fr;
     grid-column-gap: 16px;
     background-color: var(--main-bg-color);
     padding: 25px 50px;

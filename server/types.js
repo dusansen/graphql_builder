@@ -27,7 +27,7 @@ export const typeDefs = gql`
   }
 
   type Mutation {
-    addArticle(title: String!, text: String!, author: ID!): Article,
+    addArticle(title: String!, text: String!, authorId: ID!): Article,
     addAuthor(firstName: String!, lastName: String!): User
   }
 `;

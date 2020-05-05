@@ -33,17 +33,13 @@ const renderConditionOptions = type =>
     <Option key={i} value={option.value}>{option.label}</Option>
   );
 
-const Condition = ({ type, argName, queryArgValues, setQueryArgValues }) => {
-  const handleConditionChange = value => {
-    const argValue = queryArgValues[argName] || {};
-    argValue.condition = value;
-    setQueryArgValues({...queryArgValues, [argName]: argValue});
-  };
+const Condition = ({ type }) => {
+  const handleChange = value => {};
 
   return (
     <Select
       className='condition-select'
-      onChange={handleConditionChange}
+      onChange={handleChange}
       style={{width: '100%'}}>
       {renderConditionOptions(type)}
     </Select>
