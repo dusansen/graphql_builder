@@ -24,6 +24,7 @@ const initialState = {
 }
 
 const App = () => {
+  const [fetching, setFetching] = useState(false);
   const [queries, setQueries] = useState([]);
   const [selectedQuery, setSelectedQuery] = useState(null);
   const [queryTree, setQueryTree] = useState(null);
@@ -196,7 +197,6 @@ const App = () => {
   };
 
   const handleRunQuery = () => {
-    console.log('handleRunQuery');
     if (!selectedQuery || !selectedFields.length) {
       return;
     }
@@ -211,25 +211,29 @@ const App = () => {
 
   const runGQLQuery = async () => {
     try {
+      setFetching(true);
       const { data } = await client.query({
         query: gql`${gqlQueryText}`
       });
       setQueryResult(data);
+      setFetching(false);
     } catch (ex) {
       setQueryResult(initialState.queryResult);
+      setFetching(false);
     }
   };
 
   const runGQLMutation = async () => {
-    console.log('mutation run');
     try {
+      setFetching(true);
       const { data } = await client.mutate({
         mutation: gql`${gqlQueryText}`
       });
       setQueryResult(data);
+      setFetching(false);
     } catch (ex) {
-      console.log('exception');
       setQueryResult(initialState.queryResult);
+      setFetching(false);
     }
   };
 
@@ -275,8 +279,13 @@ const App = () => {
     }
     
     const queryParameters = Object.entries(queryArgValues)
-      .reduce((acc, val) =>
-        acc += val[1].value ? `,${val[0]}: "${val[1].value}"` : '', '')
+      .reduce((acc, val) => {
+        if (!val[1].value) {
+          return acc += '';
+        }
+        const argValue = val[1].type !== 'Int' ? `"${val[1].value}"` : val[1].value;
+        return acc += `,${val[0]}: ${argValue}`;
+      }, '')
       .substring(1);
     
     if (!queryParameters) {
@@ -339,6 +348,7 @@ const App = () => {
             </div>
             <div>
               <h3>QUERY RESULTS</h3>
+              {fetching && <h3>FETCHING</h3>}
             {
               queryResult ?
               <pre className='query-result'>{JSON.stringify(queryResult, null, 2)}</pre> :

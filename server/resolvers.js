@@ -1,22 +1,22 @@
-const axios = require('axios');
+import { getArticles, getComments, getAuthors, addAuthor, addArticle } from './database';
 
 export const resolvers = {
   Query: {
-    getArticles: () => axios.get('http://localhost:3000/articles').then(result => result.data),
-    getComments: () => axios.get('http://localhost:3000/comments').then(result => result.data),
+    getArticles: getArticles,
+    getComments: getComments,
+    getAuthors: getAuthors
   },
 
   Mutation: {
-    addArticle: (parent, args) => axios.post('http://localhost:3000/articles', args).then(result => result.data),
-    addAuthor: (parent, args) => axios.post('http://localhost:3000/authors', args).then(result => result.data)
+    addArticle: (_, args) => addArticle(args),
+    addAuthor: (_, args) => addAuthor(args)
   },
 
   Article: {
-    author: parent => axios.get(`http://localhost:3000/authors/${parent.authorId}`).then(result => result.data),
-    comments: parent => axios.get('http://localhost:3000/comments').then(result =>
-      result.data.filter(com => com.articleId === parent.id)),
+    author: parent => parent.author,
+    comments: parent => parent.comments,
   },
   Comment: {
-    author: parent => axios.get(`http://localhost:3000/authors/${parent.authorId}`).then(result => result.data)
+    author: parent => parent.author
   }
 };

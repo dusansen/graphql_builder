@@ -23,6 +23,7 @@ const StyledWrapper = styled.div`
   .filters-header {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
+    grid-column-gap: 8px;
     margin-bottom: 8px;
   }
   .filter-header-label {

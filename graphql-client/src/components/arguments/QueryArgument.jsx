@@ -10,6 +10,7 @@ const QueryArgument = ({
   const handleInputChange = ({ target: { value } }) => {
     const argValue = queryArgValues[name] || {};
     argValue.value = value;
+    argValue.type = type.name || type.ofType.name;
     setQueryArgValues({...queryArgValues, [name]: argValue});
     return;
   };
