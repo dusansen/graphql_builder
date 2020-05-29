@@ -42,6 +42,7 @@ const App = () => {
   const [selectedFilters, setSelectedFilters] = useState(initialState.selectedFilters);
   const [allFilters, setAllFilters] = useState([]);
   const [filtersEnabled, setFiltersEnabled] = useState(false);
+  const [filtersVisible, setFiltersVisible] = useState(false);
 
   const client = useApolloClient();
   const { data: schema } = useQuery(GET_GRAPHQL_SCHEMA);
@@ -68,6 +69,10 @@ const App = () => {
     setSelectedFilters(initialState.selectedFilters);
     calculateQuery();
   }, [selectedQuery]);
+
+  const showFilters = () => setFiltersVisible(true);
+
+  const hideFilters = () => setFiltersVisible(false);
 
   const changeSelectedFilters = (filterName, filterValue) => {
     const newSelectedFilters = { ...selectedFilters };
@@ -337,9 +342,9 @@ const App = () => {
 
   return (
     <StyledWrapper>
-      <Layout>
+      <div className='layout'>
         <Header>GraphQL Query Builder</Header>
-        <Content>
+        <div className='content'>
           <div className='run-query'>
             <Button
               icon='caret-right'
@@ -356,9 +361,17 @@ const App = () => {
           <div className='main-content'>
             <div className='query-maker'>
               <h3>Query Selection</h3>
-              <Select className='query-select' placeholder='Select query' onChange={handleQuerySelect}>
-                {queries.length > 0 ? renderQueriesSelect() : null}
-              </Select>
+              <div className='query-select-and-filter'>
+                <Select className='query-select' placeholder='Select query' onChange={handleQuerySelect}>
+                  {queries.length > 0 ? renderQueriesSelect() : null}
+                </Select>
+                <Button
+                  icon='filter'
+                  className='filters-button'
+                  onClick={showFilters}>
+                  Show filters
+                </Button>
+              </div>
               {
                 queryTree ? (
                   <Tree
@@ -383,13 +396,6 @@ const App = () => {
                 />
               }
             </div>
-            {
-              filtersEnabled &&
-              <div className='query-filters'>
-                <Filters selectedFields={allFilters} changeSelectedFilters={changeSelectedFilters}/>
-              </div>
-            }
-            
             <div>
               <h3>QUERY RESULTS</h3>
               {fetching && <h3>FETCHING</h3>}
@@ -400,20 +406,64 @@ const App = () => {
             }
             </div>
           </div>
-        </Content>
+          {
+            filtersEnabled &&
+            <div className={`query-filters ${filtersVisible ? 'filters-shown' : 'filters-hidden'}`}>
+              <Filters
+                selectedFields={allFilters}
+                changeSelectedFilters={changeSelectedFilters}
+                hideFilters={hideFilters} />
+            </div>
+          }
+        </div>
         {showGqlQuery && <QueryViewer query={gqlQueryText}/>}
-      </Layout>
+      </div>
     </StyledWrapper>
   );
 }
 
 const StyledWrapper = styled.div`
+  .layout {
+    display: grid;
+    grid-template-rows: 64px 1fr;
+    height: 100vh;
+  }
+
+  .content {
+    position: relative;
+    display: grid;
+    grid-template-rows: 80px 1fr;
+    padding: 0 50px;
+  }
+
   .main-content {
     display: grid;
-    grid-template-columns: 1.5fr 2.5fr 3fr;
+    grid-template-columns: 500px 1fr;
     grid-column-gap: 16px;
     background-color: var(--main-bg-color);
-    padding: 25px 50px;
+  }
+
+  .query-select-and-filter {
+    display: flex;
+    flex-direction: row;
+  }
+
+  .filters-button {
+    margin-left: 8px;
+  }
+
+  .query-filters {
+    position: absolute;
+    height: 100%;
+    width: 800px;
+    padding: 0 50px;
+    top: 0;
+    left: 0;
+    background-color: var(--main-bg-color);
+    z-index: 10;
+    -webkit-box-shadow: 0px 0px 35px -7px rgba(0,21,41,1);
+    -moz-box-shadow: 0px 0px 35px -7px rgba(0,21,41,1);
+    box-shadow: 0px 0px 35px -7px rgba(0,21,41,1);
   }
 
   .main-content,
@@ -426,7 +476,9 @@ const StyledWrapper = styled.div`
   }
 
   .run-query {
-    padding: 20px 50px 0 50px;
+    display: flex;
+    align-items: center;
+    background-color: var(--main-bg-color);
   }
 
   .query-select {
@@ -449,6 +501,16 @@ const StyledWrapper = styled.div`
 
   .query-result {
     font-size: 12px;
+  }
+
+  .filters-shown {
+    left: 0px;
+    transition: left 0.8s;
+  }
+
+  .filters-hidden {
+    left: -850px;
+    transition: left 0.8s;
   }
 `;
 

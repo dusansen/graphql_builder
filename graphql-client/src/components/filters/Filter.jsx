@@ -28,7 +28,7 @@ const Filter = ({ field: { eventKey, key, type }, changeSelectedFilters }) => {
 
 const StyledWrapper = styled.div`
   display: grid;
-  grid-template-columns: 1fr 1fr 1fr;
+  grid-template-columns: 1.5fr 1fr 1.5fr;
   grid-column-gap: 8px;
   margin-bottom: 4px;
 `;
