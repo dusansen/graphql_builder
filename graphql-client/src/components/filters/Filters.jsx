@@ -13,7 +13,7 @@ const Filters = ({ selectedFields, changeSelectedFilters, hideFilters }) => {
   return (
     <StyledWrapper>
       <div className='filters-header'>Filters</div>
-      <div className='filters-column-names'>
+      <div className='filters-column-names filter-grid'>
         <div className='filter-column-label'>Field name</div>
         <div className='filter-column-label'>Condition</div>
         <div className='filter-column-label'>Value</div>
@@ -37,9 +37,6 @@ const StyledWrapper = styled.div`
   }
 
   .filters-column-names {
-    display: grid;
-    grid-template-columns: 1.5fr 1fr 1.5fr;
-    grid-column-gap: 8px;
     margin-bottom: 8px;
   }
 

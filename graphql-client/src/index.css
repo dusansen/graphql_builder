@@ -22,3 +22,9 @@ header {
   background-color: var(--header-bg-color);
   color: var(--header-text-color) !important;
 }
+
+.filter-grid {
+  display: grid;
+  grid-template-columns: 1.5fr 1fr 1.5fr 40px;
+  grid-column-gap: 8px;
+}

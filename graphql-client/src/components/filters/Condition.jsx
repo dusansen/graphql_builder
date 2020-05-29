@@ -29,9 +29,10 @@ const renderConditionOptions = type =>
     <Option key={i} value={option.value}>{option.label}</Option>
   );
 
-const Condition = ({ type, handleConditionChange }) => {
+const Condition = ({ value, type, handleConditionChange }) => {
   return (
     <Select
+      value={value}
       className='condition-select'
       onChange={handleConditionChange}
       style={{width: '100%'}}>
