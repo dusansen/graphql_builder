@@ -19,10 +19,11 @@ export const typeDefs = gql`
     _id: ID!,
     firstName: String,
     lastName: String,
+    age: Int
   }
 
   type Query {
-    getArticles: [Article],
+    getArticles(filter: String): [Article],
     getComments: [Comment],
     getAuthors: [Author]
   }

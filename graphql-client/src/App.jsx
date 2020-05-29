@@ -20,7 +20,8 @@ const initialState = {
   selectedKeys: [],
   selectedFields: [],
   queryResult: null,
-  queryArgValues: {}
+  queryArgValues: {},
+  selectedFilters: {}
 }
 
 const App = () => {
@@ -38,8 +39,9 @@ const App = () => {
   const [gqlQueryText, setGqlQueryText] = useState('');
   const [showGqlQuery, setShowGqlQuery] = useState(false);
   const [queryResult, setQueryResult] = useState(initialState.queryResult);
-  const [selectedFilters, setSelectedFilters] = useState({});
+  const [selectedFilters, setSelectedFilters] = useState(initialState.selectedFilters);
   const [allFilters, setAllFilters] = useState([]);
+  const [filtersEnabled, setFiltersEnabled] = useState(false);
 
   const client = useApolloClient();
   const { data: schema } = useQuery(GET_GRAPHQL_SCHEMA);
@@ -59,12 +61,24 @@ const App = () => {
 
   useEffect(() => {
     calculateQuery();
-  }, [selectedFields, queryArgValues]);
+  }, [selectedFields, queryArgValues, selectedFilters]);
 
   useEffect(() => {
     setQueryArgValues(initialState.queryArgValues);
+    setSelectedFilters(initialState.selectedFilters);
     calculateQuery();
   }, [selectedQuery]);
+
+  const changeSelectedFilters = (filterName, filterValue) => {
+    const newSelectedFilters = { ...selectedFilters };
+    const { value, condition } = filterValue;
+    if (!value || !condition) {
+      delete newSelectedFilters[filterName];
+    } else {
+      newSelectedFilters[filterName] = filterValue;
+    }
+    setSelectedFilters(newSelectedFilters);
+  };
 
   const calculateQuery = () => {
     if (selectedQuery) {
@@ -81,8 +95,12 @@ const App = () => {
     const query = queries.find(q => q.name === selected);
     resetFieldsSelection();
     setSelectedQuery(query);
-    setShowQueryArgs(query.args.length > 0);
-    createQueryTree(query.type.name || query.type.ofType.name);
+    setShowQueryArgs(
+      query.args.length > 1 ||
+      (query.args.length === 1 && !query.args.find(arg => arg.name === 'filter'))
+    );
+    setFiltersEnabled(query.args.find(arg => arg.name === 'filter'));
+    createQueryTreeAndFilters(query.type.name || query.type.ofType.name);
   };
 
   const resetFieldsSelection = () => {
@@ -93,42 +111,56 @@ const App = () => {
     setSelectedFields(initialState.selectedFields);
   };
 
-  const createQueryTree = queryReturnType => {
+  const createQueryTreeAndFilters = queryReturnType => {
     const dataTree = [];
+    const queryFilters = [];
 
     const typeFields = schema['__schema'].types.find(type => type.name === queryReturnType).fields;
     typeFields.forEach(tf => {
       const type = tf.type.name ? tf.type.name : tf.type.ofType.name;
+      const kind = tf.type.name ? tf.type.kind : tf.type.ofType.kind;
       dataTree.push({
         title: tf.name,
         key: tf.name,
         type,
-        kind: tf.type.kind,
+        kind,
         children: []
       });
-      const kind = tf.type.name ? tf.type.kind : tf.type.ofType.kind;
       if (kind === 'OBJECT') {
-        fillTreeNode(dataTree.slice(-1)[0]);
+        fillTreeNodeAndFilters(dataTree.slice(-1)[0], queryFilters);
+      } else {
+        queryFilters.push({
+          title: tf.name,
+          key: tf.name,
+          type
+        });
       }
     });
+    setAllFilters(queryFilters);
     setQueryTree(dataTree);
   };
 
-  const fillTreeNode = parentNode => {
+  const fillTreeNodeAndFilters = (parentNode, queryFilters) => {
     const typeFields = schema['__schema'].types.find(type => type.name === parentNode.type).fields;
 
     typeFields.forEach(tf => {
       const type = tf.type.name ? tf.type.name : tf.type.ofType.name;
+      const kind = tf.type.name ? tf.type.kind : tf.type.ofType.kind;
       parentNode.children.push({
         title: tf.name,
         key: `${parentNode.key}.${tf.name}`,
         type,
-        kind: tf.type.kind,
+        kind,
         children: []
       });
-      const kind = tf.type.name ? tf.type.kind : tf.type.ofType.kind
       if (kind === 'OBJECT') {
-        fillTreeNode(parentNode.children.slice(-1)[0]);
+        fillTreeNodeAndFilters(parentNode.children.slice(-1)[0], queryFilters);
+      } else {
+        queryFilters.push({
+          title: tf.name,
+          key: `${parentNode.key}.${tf.name}`,
+          type
+        });
       }
     });
   }
@@ -268,31 +300,39 @@ const App = () => {
       .replace(new RegExp(`: "${removeValue}"`, 'g'), '')
       .replace(new RegExp('[,":]', 'g'), '');
 
-    const queryWithParameters = addParamsToQuery(queryJSON);
+    const queryWithArguments = addArgumentsToQuery(queryJSON);
 
-    return selectedQuery.gqlType === 'mutation' ? `mutation ${selectedQuery.name} ${queryWithParameters}` : queryWithParameters;
+    return selectedQuery.gqlType === 'mutation' ? `mutation ${selectedQuery.name} ${queryWithArguments}` : queryWithArguments;
   };
 
-  const addParamsToQuery = query => {
-    if (!Object.keys(queryArgValues).length) {
+  const addArgumentsToQuery = query => {
+    const argumentsExists = Object.keys(queryArgValues).length;
+    const filtersExists = Object.keys(selectedFilters).length;
+    if (!argumentsExists && !filtersExists) {
       return query;
     }
     
-    const queryParameters = Object.entries(queryArgValues)
-      .reduce((acc, val) => {
-        if (!val[1].value) {
-          return acc += '';
-        }
-        const argValue = val[1].type !== 'Int' ? `"${val[1].value}"` : val[1].value;
-        return acc += `,${val[0]}: ${argValue}`;
-      }, '')
-      .substring(1);
+    const queryArguments = argumentsExists ?
+      Object.entries(queryArgValues)
+        .reduce((acc, val) => {
+          if (!val[1].value) {
+            return acc += '';
+          }
+          const argValue = val[1].type !== 'Int' ? `"${val[1].value}"` : val[1].value;
+          return acc += `, ${val[0]}: ${argValue}`;
+        }, '')
+        .substring(1) :
+      '';
+
+    const filters = filtersExists ?
+      `${argumentsExists ? ',' : ''}filter: "${JSON.stringify(selectedFilters).replace(/"/g, '\\"')}"` :
+      '';
     
-    if (!queryParameters) {
+    if (!queryArguments && !filters) {
       return query;
     }
     
-    return query.replace(new RegExp(`${selectedQuery.name} {`), `${selectedQuery.name} (${queryParameters}) {`);
+    return query.replace(new RegExp(`${selectedQuery.name} {`), `${selectedQuery.name} (${queryArguments}${filters}) {`);
   };
 
   return (
@@ -343,9 +383,13 @@ const App = () => {
                 />
               }
             </div>
-            <div className='query-filters'>
-              <Filters selectedFields={selectedFields} />
-            </div>
+            {
+              filtersEnabled &&
+              <div className='query-filters'>
+                <Filters selectedFields={allFilters} changeSelectedFilters={changeSelectedFilters}/>
+              </div>
+            }
+            
             <div>
               <h3>QUERY RESULTS</h3>
               {fetching && <h3>FETCHING</h3>}

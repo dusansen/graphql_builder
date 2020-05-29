@@ -5,26 +5,22 @@ const { Option } = Select;
 
 const CONDITIONS = {
   String: [
-    { label: 'equal', value: 'eq' },
-    { label: 'not equal', value: 'neq'} ,
-    { label: 'contains', value: 'contains' },
-    { label: 'does not contain', value: 'does_not_contain' },
-    { label: 'starts with', value: 'starts_with' },
-    { label: 'not starts with', value: 'not_starts_with' },
-    { label: 'ends with', value: 'ends_with' },
-    { label: 'not ends with', value: 'not_ends_with' }
+    { label: 'equal', value: '$eq' },
+    { label: 'not equal', value: '$neq'} ,
+    { label: 'contains', value: 'contain' },
+    { label: 'does not contain', value: 'not_contain' }
   ],
   Int: [
-    { label: 'equal', value: 'eq' },
-    { label: 'not equal', value: 'neq' },
-    { label: 'less than', value: 'lt' },
-    { label: 'less than or equal', value: 'lte' },
-    { label: 'greater than', value: 'gt' },
-    { label: 'greater than or equal', value: 'gte' }
+    { label: 'equal', value: '$eq' },
+    { label: 'not equal', value: '$ne' },
+    { label: 'less than', value: '$lt' },
+    { label: 'less than or equal', value: '$lte' },
+    { label: 'greater than', value: '$gt' },
+    { label: 'greater than or equal', value: '$gte' }
   ],
   ID: [
-    { label: 'is', value: 'is' },
-    { label: 'not', value: 'not' }
+    { label: 'is', value: '$eq' },
+    { label: 'not', value: '$ne' }
   ]
 };
 
@@ -33,13 +29,11 @@ const renderConditionOptions = type =>
     <Option key={i} value={option.value}>{option.label}</Option>
   );
 
-const Condition = ({ type }) => {
-  const handleChange = value => {};
-
+const Condition = ({ type, handleConditionChange }) => {
   return (
     <Select
       className='condition-select'
-      onChange={handleChange}
+      onChange={handleConditionChange}
       style={{width: '100%'}}>
       {renderConditionOptions(type)}
     </Select>

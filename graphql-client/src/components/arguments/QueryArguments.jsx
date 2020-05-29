@@ -11,7 +11,7 @@ const QueryArguments = ({ queryArgs, queryArgValues, setQueryArgValues }) => {
         <h4>Type</h4>
         <h4>Value</h4>
       </div>
-      {queryArgs.map((arg, i) =>
+      {queryArgs.map((arg, i) => arg.name !== 'filter' &&
         <QueryArgument
           key={i}
           queryArg={arg}

@@ -18,7 +18,7 @@ const QueryArgument = ({
   return (
     <StyledWrapper>
       <div>{name}</div>
-      <div>{type.name || type.ofType.name}</div>
+      <div>{type.name || (type.ofType ? type.ofType.name : 'Int')}</div>
       <Input
         placeholder='Input value'
         value={queryArgValues[name] ? queryArgValues[name].value : ''}

@@ -2,9 +2,9 @@ import { getArticles, getComments, getAuthors, addAuthor, addArticle } from './d
 
 export const resolvers = {
   Query: {
-    getArticles: getArticles,
-    getComments: getComments,
-    getAuthors: getAuthors
+    getArticles,
+    getComments,
+    getAuthors
   },
 
   Mutation: {

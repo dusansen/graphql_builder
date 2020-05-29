@@ -1,6 +1,7 @@
-import { ObjectId } from 'mongodb';
 require('dotenv').config();
 const { MongoClient } = require('mongodb');
+import { ObjectId } from 'mongodb';
+import { convertToMongoType, mongoOperatorMapper } from './utils';
 
 let database;
 
@@ -14,19 +15,40 @@ const initDB = async () => {
   }
 };
 
-export const getArticles = () => database.collection('articles')
-  .aggregate(
-    [
-      {
-        $lookup: {
-          from: 'comments',
-          localField: '_id',
-          foreignField: 'articleId',
-          as: 'comments'
-        }
+const createMatchObject = filter => {
+  const matchArray = [];
+  const filterObject = JSON.parse(filter);
+  Object.entries(filterObject).forEach(([propName, { value, type, condition }]) => {
+    matchArray.push({
+      [propName]: { [mongoOperatorMapper(condition)]: convertToMongoType(value, type, condition) }
+    })
+  }, []);
+  return {
+    $match: {
+      $and: matchArray
+    }
+  };
+}
+
+export const getArticles = (_, { filter }) => {
+  const aggregateArray = [
+    {
+      $lookup: {
+        from: 'comments',
+        localField: '_id',
+        foreignField: 'articleId',
+        as: 'comments'
       }
-    ]
-  ).toArray();
+    }
+  ];
+
+  if (filter) {
+    aggregateArray.push(createMatchObject(filter));
+  }
+
+  return database.collection('articles')
+    .aggregate(aggregateArray).toArray();
+};
 
 export const getAuthors = () => database.collection('authors').find({}).toArray();
 

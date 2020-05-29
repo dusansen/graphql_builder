@@ -2,9 +2,11 @@ import React from 'react';
 import styled from 'styled-components';
 import Filter from './Filter';
 
-const Filters = ({ selectedFields }) => {
+const Filters = ({ selectedFields, changeSelectedFilters }) => {
   const renderFilters = () => {
-    const filters = selectedFields.map((field, i) => <Filter key={i} field={field}/>);
+    const filters = selectedFields.map((field, i) =>
+      <Filter key={i} field={field} changeSelectedFilters={changeSelectedFilters} />
+    );
     return <div>{filters}</div>;
   };
   return (
@@ -26,9 +28,14 @@ const StyledWrapper = styled.div`
     grid-column-gap: 8px;
     margin-bottom: 8px;
   }
+
   .filter-header-label {
     font-size: 16px;
     font-weight: bold;
+  }
+
+  .clear-button {
+    margin-top: 8px;
   }
 `;
 export default Filters; 
