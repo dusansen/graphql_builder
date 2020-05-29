@@ -365,12 +365,15 @@ const App = () => {
                 <Select className='query-select' placeholder='Select query' onChange={handleQuerySelect}>
                   {queries.length > 0 ? renderQueriesSelect() : null}
                 </Select>
-                <Button
-                  icon='filter'
-                  className='filters-button'
-                  onClick={showFilters}>
-                  Show filters
-                </Button>
+                {
+                  filtersEnabled &&
+                  <Button
+                    icon='filter'
+                    className='filters-button'
+                    onClick={showFilters}>
+                    Show filters
+                  </Button>
+                }
               </div>
               {
                 queryTree ? (
