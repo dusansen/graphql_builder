@@ -8,8 +8,9 @@ import { Layout, Select, Button, Tree } from 'antd';
 import QueryArguments from './components/arguments/QueryArguments';
 import QueryViewer from './components/query/QueryViewer';
 import Filters from './components/filters/Filters';
+import QueryResult from './components/query/QueryResult';
 
-const { Header, Content } = Layout;
+const { Header } = Layout;
 const { Option } = Select;
 const { TreeNode } = Tree;
 
@@ -401,12 +402,17 @@ const App = () => {
             </div>
             <div>
               <h3>QUERY RESULTS</h3>
-              {fetching && <h3>FETCHING</h3>}
-            {
+              {fetching && <div class="loader"></div>}
+            {/* {
               queryResult ?
               <pre className='query-result'>{JSON.stringify(queryResult, null, 2)}</pre> :
               null
-            }
+            } */}
+              {
+                queryResult && queryResult[selectedQuery.name] && queryResult[selectedQuery.name].length ?
+                  <QueryResult data={queryResult[selectedQuery.name]} /> :
+                  null
+              }
             </div>
           </div>
           {
@@ -514,6 +520,33 @@ const StyledWrapper = styled.div`
   .filters-hidden {
     left: -850px;
     transition: left 0.8s;
+  }
+
+  .loader {
+    display: inline-block;
+    width: 80px;
+    height: 80px;
+  }
+
+  .loader:after {
+    content: " ";
+    display: block;
+    width: 64px;
+    height: 64px;
+    margin: 8px;
+    border-radius: 50%;
+    border: 6px solid #001529;
+    border-color: #001529 transparent #001529 transparent;
+    animation: loader 1.2s linear infinite;
+  }
+  
+  @keyframes loader {
+    0% {
+      transform: rotate(0deg);
+    }
+    100% {
+      transform: rotate(360deg);
+    }
   }
 `;
 
