@@ -28,47 +28,32 @@ const createMatchObject = filter => {
       $and: matchArray
     }
   };
+};
+
+const getAggregateArrayForCollection = collection => {
+  if (collection === 'articles') {
+    return [
+      {
+        $lookup: {
+          from: 'comments',
+          localField: '_id',
+          foreignField: 'articleId',
+          as: 'comments'
+        }
+      }
+    ];
+  }
+  return [];
 }
 
-export const getArticles = (_, { filter }) => {
-  const aggregateArray = [
-    {
-      $lookup: {
-        from: 'comments',
-        localField: '_id',
-        foreignField: 'articleId',
-        as: 'comments'
-      }
-    }
-  ];
+export const getResources = ({ filter }, collection) => {
+  const aggregateArray = getAggregateArrayForCollection(collection);
 
   if (filter) {
     aggregateArray.push(createMatchObject(filter));
   }
 
-  return database.collection('articles')
-    .aggregate(aggregateArray).toArray();
-};
-
-export const getAuthors = (_, { filter }) => {
-  const aggregateArray = [];
-
-  if (filter) {
-    aggregateArray.push(createMatchObject(filter));
-  }
-
-  return database.collection('authors')
-    .aggregate(aggregateArray).toArray();
-};
-
-export const getComments = (_, { filter }) => {
-  const aggregateArray = [];
-
-  if (filter) {
-    aggregateArray.push(createMatchObject(filter));
-  }
-
-  return database.collection('comments')
+  return database.collection(collection)
     .aggregate(aggregateArray).toArray();
 };
 

@@ -1,10 +1,10 @@
-import { getArticles, getComments, getAuthors, addAuthor, addArticle, addComment } from './database';
+import { getResources, addAuthor, addArticle, addComment } from './database';
 
 export const resolvers = {
   Query: {
-    getArticles,
-    getComments,
-    getAuthors
+    getArticles: (_, args) => getResources(args, 'articles'),
+    getAuthors: (_, args) => getResources(args, 'authors'),
+    getComments: (_, args) => getResources(args, 'comments')
   },
 
   Mutation: {
