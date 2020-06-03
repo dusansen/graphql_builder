@@ -75,9 +75,13 @@ const App = () => {
     if (!data) {
       return null;
     }
-    return data[selectedQuery.name] && data[selectedQuery.name].length ?
-      data[selectedQuery.name] :
-      [data];
+    if (data[selectedQuery.name] && data[selectedQuery.name].length) {
+      return data[selectedQuery.name]
+    }
+    if (data[selectedQuery.name] && Object.keys(data[selectedQuery.name]).length) {
+      return [data[selectedQuery.name]];
+    }
+    return [];
   };
 
   const showFilters = () => setFiltersVisible(true);

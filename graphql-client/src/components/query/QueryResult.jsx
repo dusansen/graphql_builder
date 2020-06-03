@@ -5,7 +5,7 @@ import ReactJson from 'react-json-view'
 const QueryResult = ({ data }) => {
 return (
     <StyledWrapper>
-    <div className='total'>TOTAL: {data.length}</div>
+    <div className='total'>{data.length ? `TOTAL: ${data.length}` : 'NO RESULTS FOUND'}</div>
     {
       data.map(record =>
         <div className='record'><ReactJson src={record} name={false} displayObjectSize={false} /></div>)
@@ -17,6 +17,7 @@ return (
 const StyledWrapper = styled.div`
   .total {
     font-size: 14px;
+    font-weight: bold;
   }
 
   .record {
