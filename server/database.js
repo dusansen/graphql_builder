@@ -50,9 +50,27 @@ export const getArticles = (_, { filter }) => {
     .aggregate(aggregateArray).toArray();
 };
 
-export const getAuthors = () => database.collection('authors').find({}).toArray();
+export const getAuthors = (_, { filter }) => {
+  const aggregateArray = [];
 
-export const getComments = () => database.collection('comments').find({}).toArray();
+  if (filter) {
+    aggregateArray.push(createMatchObject(filter));
+  }
+
+  return database.collection('authors')
+    .aggregate(aggregateArray).toArray();
+};
+
+export const getComments = (_, { filter }) => {
+  const aggregateArray = [];
+
+  if (filter) {
+    aggregateArray.push(createMatchObject(filter));
+  }
+
+  return database.collection('comments')
+    .aggregate(aggregateArray).toArray();
+};
 
 export const addArticle = async data => {
   try {

@@ -7,8 +7,8 @@ return (
     <StyledWrapper>
     <div className='total'>{data.length ? `TOTAL: ${data.length}` : 'NO RESULTS FOUND'}</div>
     {
-      data.map(record =>
-        <div className='record'><ReactJson src={record} name={false} displayObjectSize={false} /></div>)
+      data.map((record, i) =>
+        <div className='record'><ReactJson key={i} src={record} name={false} displayObjectSize={false} /></div>)
     }
     </StyledWrapper>
   );
