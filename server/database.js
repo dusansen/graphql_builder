@@ -75,4 +75,19 @@ export const addAuthor = async data => {
   }
 };
 
+export const addComment = async data => {
+  try {
+    const author = await database.collection('authors').findOne({ _id: new ObjectId(data.authorId) });
+    const comment = {
+      text: data.text,
+      author,
+      articleId: new ObjectId(data.articleId)
+    }
+    const { ops } = await database.collection('comments').insertOne(comment);
+    return ops[0];
+  } catch {
+    return null;
+  }
+};
+
 initDB();

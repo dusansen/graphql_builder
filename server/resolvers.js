@@ -1,4 +1,4 @@
-import { getArticles, getComments, getAuthors, addAuthor, addArticle } from './database';
+import { getArticles, getComments, getAuthors, addAuthor, addArticle, addComment } from './database';
 
 export const resolvers = {
   Query: {
@@ -9,7 +9,8 @@ export const resolvers = {
 
   Mutation: {
     addArticle: (_, args) => addArticle(args),
-    addAuthor: (_, args) => addAuthor(args)
+    addAuthor: (_, args) => addAuthor(args),
+    addComment: (_, args) => addComment(args)
   },
 
   Article: {

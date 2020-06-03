@@ -30,6 +30,7 @@ export const typeDefs = gql`
 
   type Mutation {
     addArticle(title: String!, text: String!, authorId: ID!): Article,
-    addAuthor(firstName: String!, lastName: String!, age: Int!): Author
+    addAuthor(firstName: String!, lastName: String!, age: Int!): Author,
+    addComment(text: String!, authorId: String!, articleId: String!): Comment
   }
 `;

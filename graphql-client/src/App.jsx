@@ -71,6 +71,15 @@ const App = () => {
     calculateQuery();
   }, [selectedQuery]);
 
+  const mapQueryResults = data => {
+    if (!data) {
+      return null;
+    }
+    return data[selectedQuery.name] && data[selectedQuery.name].length ?
+      data[selectedQuery.name] :
+      [data];
+  };
+
   const showFilters = () => setFiltersVisible(true);
 
   const hideFilters = () => setFiltersVisible(false);
@@ -253,7 +262,7 @@ const App = () => {
       const { data } = await client.query({
         query: gql`${gqlQueryText}`
       });
-      setQueryResult(data);
+      setQueryResult(mapQueryResults(data));
       setFetching(false);
     } catch (ex) {
       setQueryResult(initialState.queryResult);
@@ -267,7 +276,7 @@ const App = () => {
       const { data } = await client.mutate({
         mutation: gql`${gqlQueryText}`
       });
-      setQueryResult(data);
+      setQueryResult(mapQueryResults(data));
       setFetching(false);
     } catch (ex) {
       setQueryResult(initialState.queryResult);
@@ -402,15 +411,10 @@ const App = () => {
             </div>
             <div>
               <h3>QUERY RESULTS</h3>
-              {fetching && <div class="loader"></div>}
-            {/* {
-              queryResult ?
-              <pre className='query-result'>{JSON.stringify(queryResult, null, 2)}</pre> :
-              null
-            } */}
+              {fetching && <div className="loader"></div>}
               {
-                queryResult && queryResult[selectedQuery.name] && queryResult[selectedQuery.name].length ?
-                  <QueryResult data={queryResult[selectedQuery.name]} /> :
+                queryResult ?
+                  <QueryResult data={queryResult} /> :
                   null
               }
             </div>
