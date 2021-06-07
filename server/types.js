@@ -25,7 +25,8 @@ export const typeDefs = gql`
   type Query {
     getArticles(filter: String): [Article],
     getComments(filter: String): [Comment],
-    getAuthors(filter: String): [Author]
+    getAuthors(filter: String): [Author],
+    getAuthorsByFirstName(firstName: String!): [Author]
   }
 
   type Mutation {

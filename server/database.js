@@ -57,6 +57,24 @@ export const getResources = ({ filter }, collection) => {
     .aggregate(aggregateArray).toArray();
 };
 
+export const getAuthorsByFirstName = ({ firstName }, collection) => {
+  const aggregateArray = getAggregateArrayForCollection(collection);
+
+  if (firstName) {
+    const queryObject = JSON.stringify({
+      firstName: {
+        value: firstName,
+        type: 'String',
+        condition: 'contain'
+      }
+    });
+    aggregateArray.push(createMatchObject(queryObject))
+  }
+
+  return database.collection(collection)
+    .aggregate(aggregateArray).toArray();
+}
+
 export const addArticle = async data => {
   try {
     const author = await database.collection('authors').findOne({ _id: new ObjectId(data.authorId) });

@@ -1,9 +1,16 @@
-import { getResources, addAuthor, addArticle, addComment } from './database';
+import {
+  getResources,
+  addAuthor,
+  addArticle,
+  addComment,
+  getAuthorsByFirstName
+} from './database';
 
 export const resolvers = {
   Query: {
     getArticles: (_, args) => getResources(args, 'articles'),
     getAuthors: (_, args) => getResources(args, 'authors'),
+    getAuthorsByFirstName: (_, args) => getAuthorsByFirstName(args, 'authors'),
     getComments: (_, args) => getResources(args, 'comments')
   },
 
